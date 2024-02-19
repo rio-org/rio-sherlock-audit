@@ -1,14 +1,19 @@
-<h1 align="center">
-  @rionetwork/protocol
-</h1>
-<p align="center">
-  The Rio Network protocol contracts
-</p>
-<p align="center">
-  <a href="https://rio.network/">
-    <img src="https://img.shields.io/badge/website-rio.network-blue">
-  </a>
-</p>
+<div align="center">
+  <p align="center">
+    <a href="https://rio.network/" target="blank">
+      <img src="https://i.imgur.com/b1uw4z4.png" width="200" alt="Rio Logo" />
+    </a>
+  </p>
+  <h1>Rio Network</h1>
+  <p>The liquid restaking network</p>
+
+  <p align="center">
+    <a href="https://rio.network/">
+      <img src="https://img.shields.io/badge/website-rio.network-blue">
+    </a>
+  </p>
+</div>
+<br />
 
 ## Documentation
 
