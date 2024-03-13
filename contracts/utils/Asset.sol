@@ -39,7 +39,7 @@ library Asset {
     /// @param amount The amount of ETH to send.
     /// @dev This function limits the gas passed with the call to 10,000.
     function transferETH(address recipient, uint256 amount) internal {
-        (bool success,) = recipient.call{value: amount, gas: 10_000}('');
+        (bool success,) = recipient.call{value: amount}('');
         if (!success) {
             revert ETH_TRANSFER_FAILED();
         }
