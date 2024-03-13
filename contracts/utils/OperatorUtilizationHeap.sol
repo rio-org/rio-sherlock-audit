@@ -116,8 +116,12 @@ library OperatorUtilizationHeap {
         if (index < ROOT_INDEX || index > self.count) revert INVALID_INDEX();
 
         self._remove(index);
-        self._bubbleUp(index);
-        self._bubbleDown(index);
+
+        // We only need to re-heapify if the removed operator was not the last.
+        if (index < self.count) {
+            self._bubbleUp(index);
+            self._bubbleDown(index);
+        }
     }
 
     /// @notice Removes an operator from the heap by its ID.
@@ -407,7 +411,8 @@ library OperatorUtilizationHeap {
     /// @param self The heap.
     /// @param i The index of the operator to extract.
     function _remove(Data memory self, uint8 i) internal pure {
-        self.operators[i] = self.operators[self.count--];
+        self.operators[i] = self.operators[self.count];
+        delete self.operators[self.count--];
     }
 
     /// @dev Returns the index of the smallest child or grandchild of the node at index `i`.

@@ -146,6 +146,21 @@ contract OperatorUtilizationHeapTest is Test {
         assertEq(heap.extractMin().id, 1);
     }
 
+    function test_removeLastOperatorMaintainsHeap() public {
+        OperatorUtilizationHeap.Data memory heap = OperatorUtilizationHeap.initialize(5);
+
+        heap.insert(OperatorUtilizationHeap.Operator({id: 1, utilization: 1}));
+        heap.insert(OperatorUtilizationHeap.Operator({id: 2, utilization: 2}));
+        heap.insert(OperatorUtilizationHeap.Operator({id: 3, utilization: 3}));
+
+        heap.remove(3);
+
+        assertEq(heap.count, 2);
+        assertEq(heap.getMin().id, 1);
+        assertEq(heap.getMax().id, 2);
+    }
+
+
     function test_removeByID() public {
         OperatorUtilizationHeap.Data memory heap = OperatorUtilizationHeap.initialize(5);
 
