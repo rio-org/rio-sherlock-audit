@@ -28,13 +28,10 @@ contract RioLRTOperatorDelegatorTest is RioDeployer {
         (bool success,) = address(delegatorContract.eigenPod()).call{value: 1.123 ether}('');
         assertTrue(success);
 
-        uint256 depositPoolBalanceBefore = address(reETH.depositPool).balance;
-
         delegatorContract.scrapeNonBeaconChainETHFromEigenPod();
         delayedWithdrawalRouter.claimDelayedWithdrawals(address(reETH.rewardDistributor), 1);
 
-        // Account for reward split.
-        assertGt(address(reETH.depositPool).balance - depositPoolBalanceBefore, 1 ether);
+        assertEq(address(reETH.rewardDistributor).balance, 1.123 ether);
         assertEq(address(delegatorContract.eigenPod()).balance, 0);
     }
 

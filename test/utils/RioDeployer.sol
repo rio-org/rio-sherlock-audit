@@ -39,13 +39,23 @@ abstract contract RioDeployer is EigenLayerDeployer {
 
     RioLRTIssuer issuer;
 
-    address constant REETH_TREASURY = address(0x101);
-    address constant REETH_OPERATOR_REWARD_POOL = address(0x102);
+    address immutable REETH_TREASURY;
+    address immutable REETH_OPERATOR_REWARD_POOL;
 
-    address constant RELST_TREASURY = address(0x201);
-    address constant RELST_OPERATOR_REWARD_POOL = address(0x202);
+    address immutable RELST_TREASURY;
+    address immutable RELST_OPERATOR_REWARD_POOL;
 
-    address constant EOA = address(0xE0A);
+    address immutable EOA;
+
+    constructor() {
+        REETH_TREASURY = makeAddr('REETH_TREASURY');
+        REETH_OPERATOR_REWARD_POOL = makeAddr('REETH_OPERATOR_REWARD_POOL');
+
+        RELST_TREASURY = makeAddr('RELST_TREASURY');
+        RELST_OPERATOR_REWARD_POOL = makeAddr('RELST_OPERATOR_REWARD_POOL');
+
+        EOA = makeAddr('EOA');
+    }
 
     function deployRio() public {
         deployEigenLayer();
