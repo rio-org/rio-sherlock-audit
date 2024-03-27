@@ -4,6 +4,7 @@ pragma solidity 0.8.23;
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import {IRioLRTWithdrawalQueue} from 'contracts/interfaces/IRioLRTWithdrawalQueue.sol';
 import {IRioLRTCoordinator} from 'contracts/interfaces/IRioLRTCoordinator.sol';
+import {IRioLRTDepositPool} from 'contracts/interfaces/IRioLRTDepositPool.sol';
 import {EmptyContract} from 'test/utils/EmptyContract.sol';
 import {RioDeployer} from 'test/utils/RioDeployer.sol';
 import {
@@ -435,6 +436,41 @@ contract RioLRTCoordinatorTest is RioDeployer {
         assertNotEq(epochSummary.aggregateRoot, bytes32(0));
         assertEq(epochSummary.assetsReceived, 0);
         assertEq(cbETH.balanceOf(address(reLST.withdrawalQueue)), 0);
+    }
+
+    function test_rebalanceCompletesWithdrawalsFromDepositPoolIfDepositToEigenLayerFails() public {
+        // Ensure there is an operator to allocate to.
+        addOperatorDelegators(reETH.operatorRegistry, address(reETH.rewardDistributor), 1);
+
+        uint256 amount = ETH_DEPOSIT_SIZE * 10;
+        uint256 amountOut = reETH.coordinator.depositETH{value: amount}();
+        reETH.coordinator.requestWithdrawal(ETH_ADDRESS, amountOut);
+
+        // Make the deposit revert.
+        vm.mockCallRevert(
+            address(reETH.depositPool),
+            abi.encodeWithSelector(IRioLRTDepositPool.depositBalanceIntoEigenLayer.selector, ETH_ADDRESS),
+            abi.encode('StrategyBaseTVLLimits: max per deposit exceeded')
+        );
+
+        uint256 epoch = reETH.withdrawalQueue.getCurrentEpoch(ETH_ADDRESS);
+
+        vm.expectEmit(true, false, false, true, address(reETH.coordinator));
+        emit IRioLRTCoordinator.PartiallyRebalanced(ETH_ADDRESS);
+
+        vm.prank(EOA, EOA);
+        reETH.coordinator.rebalance(ETH_ADDRESS);
+
+        // Ensure the next rebalance timestamp has increased.
+        assertEq(
+            reETH.coordinator.assetNextRebalanceAfter(ETH_ADDRESS), block.timestamp + reETH.coordinator.rebalanceDelay()
+        );
+
+        IRioLRTWithdrawalQueue.EpochWithdrawalSummary memory epochSummary =
+            reETH.withdrawalQueue.getEpochWithdrawalSummary(ETH_ADDRESS, epoch);
+        assertTrue(epochSummary.settled);
+        assertEq(epochSummary.assetsReceived, amount);
+        assertEq(address(reETH.withdrawalQueue).balance, amount);
     }
 
     function test_inflationAttackFails() public {

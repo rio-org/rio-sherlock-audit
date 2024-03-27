@@ -37,9 +37,14 @@ interface IRioLRTCoordinator {
     /// @param amountOut The amount of restaking tokens minted.
     event Deposited(address indexed user, address indexed asset, uint256 amountIn, uint256 amountOut);
 
-    /// @notice Emitted when an asset is rebalanced.
+    /// @notice Emitted when both withdrawals and deposits succeed during a rebalance, or
+    /// when withdrawals succeed and a deposit was not attempted.
     /// @param asset The address of the asset.
     event Rebalanced(address indexed asset);
+
+    /// @notice Emitted when withdrawals succeed, but deposits fail during an asset rebalance.
+    /// @param asset The address of the asset.
+    event PartiallyRebalanced(address indexed asset);
 
     /// @notice Emitted when the rebalance delay is set.
     /// @param newRebalanceDelay The new rebalance delay.
