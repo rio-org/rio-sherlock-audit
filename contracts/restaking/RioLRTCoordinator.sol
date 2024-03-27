@@ -128,26 +128,34 @@ contract RioLRTCoordinator is IRioLRTCoordinator, OwnableUpgradeable, UUPSUpgrad
             _processUserWithdrawalsForCurrentEpoch(asset, sharesOwed);
         }
 
-        // Deposit remaining assets into EigenLayer.
-        (uint256 sharesReceived, bool isDepositCapped) = depositPool().depositBalanceIntoEigenLayer(asset);
-        if (sharesOwed == 0 && sharesReceived == 0) {
-            revert NO_REBALANCE_NEEDED();
-        }
-        if (sharesReceived > 0) {
-            if (asset == ETH_ADDRESS) {
-                assetRegistry().increaseUnverifiedValidatorETHBalance(sharesReceived);
-            } else {
-                assetRegistry().increaseSharesHeldForAsset(asset, sharesReceived);
+        // Deposit remaining assets into EigenLayer. Deposit errors are caught to ensure withdrawals are still processed
+        // using funds from the deposit pool in the event that deposit caps are reached within EigenLayer, or an unexpected
+        // error occurs.
+        try depositPool().depositBalanceIntoEigenLayer(asset) returns (uint256 sharesReceived, bool isDepositCapped) {
+            if (sharesOwed == 0 && sharesReceived == 0) {
+                revert NO_REBALANCE_NEEDED();
             }
-        }
+            if (sharesReceived > 0) {
+                if (asset == ETH_ADDRESS) {
+                    assetRegistry().increaseUnverifiedValidatorETHBalance(sharesReceived);
+                } else {
+                    assetRegistry().increaseSharesHeldForAsset(asset, sharesReceived);
+                }
+            }
 
-        // When the deposit is not capped, the rebalance is considered complete, and the asset rebalance
-        // timestamp is increased by the specified delay. If capped, the asset may be rebalanced again
-        // immediately as there are more assets to deposit.
-        if (!isDepositCapped) {
+            // When the deposit is not capped, the rebalance is considered complete, and the asset rebalance
+            // timestamp is increased by the specified delay. If capped, the asset may be rebalanced again
+            // immediately as there are more assets to deposit.
+            if (!isDepositCapped) {
+                assetNextRebalanceAfter[asset] = uint40(block.timestamp) + rebalanceDelay;
+            }
+            emit Rebalanced(asset);
+        } catch {
+            // Always increase the next rebalance timestamp if deposits fail.
             assetNextRebalanceAfter[asset] = uint40(block.timestamp) + rebalanceDelay;
+
+            emit PartiallyRebalanced(asset);
         }
-        emit Rebalanced(asset);
     }
 
     /// @notice Sets the rebalance delay.
