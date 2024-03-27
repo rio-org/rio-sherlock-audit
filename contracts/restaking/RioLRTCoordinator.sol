@@ -129,8 +129,7 @@ contract RioLRTCoordinator is IRioLRTCoordinator, OwnableUpgradeable, UUPSUpgrad
         }
 
         // Deposit remaining assets into EigenLayer. Deposit errors are caught to ensure withdrawals are still processed
-        // using funds from the deposit pool in the event that deposit caps are reached within EigenLayer, or an unexpected
-        // error occurs.
+        // in the event that deposit caps are reached within EigenLayer, or an unexpected error occurs.
         try depositPool().depositBalanceIntoEigenLayer(asset) returns (uint256 sharesReceived, bool isDepositCapped) {
             if (sharesOwed == 0 && sharesReceived == 0) {
                 revert NO_REBALANCE_NEEDED();
